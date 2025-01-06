@@ -13,6 +13,7 @@ else
 fi
 
 echo -e "\n Building...."
+cd backend
 npm i
 
 pm2 restart mymedicos-community-backend
