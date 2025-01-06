@@ -13,6 +13,7 @@ import { Server } from "socket.io";
 
 dotenv.config({
     path: "./.env",
+    
 })
 
 
