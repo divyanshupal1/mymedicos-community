@@ -1,13 +1,11 @@
 /**
- * @type {{ ADMIN: "ADMIN"; USER: "USER"} as const}
+ * @type {{ post: "POST"; question: "QUESTION"; flashcard:"FLASHCARD"} as const}
  */
-export const UserRolesEnum = {
-    ADMIN: "ADMIN",
-    USER: "USER",
-    SUPERADMIN: "SUPERADMIN",
+export const postEnum = {
+    post: "POST", question: "QUESTION", flashcard:"FLASHCARD"
   };
   
-  export const AvailableUserRoles = Object.values(UserRolesEnum);
+  export const AvailablePostTypes = Object.values(postEnum);
   
   /**
    * @type {{ PENDING: "PENDING"; CANCELLED: "CANCELLED"; DELIVERED: "DELIVERED" } as const}
