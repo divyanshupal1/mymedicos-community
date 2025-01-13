@@ -1,4 +1,4 @@
-import { AvailableUserRoles } from "../constants.js";
+// import { AvailableUserRoles } from "../constants.js";
 import admin from "../db/firebase.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -57,17 +57,17 @@ export const getLoggedInUserOrIgnore = asyncHandler(async (req, res, next) => {
  * * This middleware is responsible for validating multiple user role permissions at a time.
  * * So, in future if we have a route which can be accessible by multiple roles, we can achieve that with this middleware
  */
-export const verifyPermission = (roles = []) =>
-  asyncHandler(async (req, res, next) => {
-    if (!req.user?._id) {
-      throw new ApiError(401, "Unauthorized request");
-    }
-    if (roles.includes(req.user?.role)||req.user?.role == 'SUPERADMIN') {
-      next();
-    } else {
-      throw new ApiError(403, "You are not allowed to perform this action");
-    }
-  });
+// export const verifyPermission = (roles = []) =>
+//   asyncHandler(async (req, res, next) => {
+//     if (!req.user?._id) {
+//       throw new ApiError(401, "Unauthorized request");
+//     }
+//     if (roles.includes(req.user?.role)||req.user?.role == 'SUPERADMIN') {
+//       next();
+//     } else {
+//       throw new ApiError(403, "You are not allowed to perform this action");
+//     }
+//   });
 
 export const avoidInProduction = asyncHandler(async (req, res, next) => {
   if (process.env.NODE_ENV === "development") {
