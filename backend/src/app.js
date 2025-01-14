@@ -25,6 +25,9 @@ const __dirname = path.dirname(__filename);
 var whitelist = [
     "http://localhost:5173",
     "http://localhost:4173",
+    "http://localhost:3000",
+    "https://www.mymedicos.in",
+    "https://mymedicos.in",
 ]
 
 const app = express();
