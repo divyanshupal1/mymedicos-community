@@ -2,6 +2,7 @@
 import admin from "../db/firebase.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { User } from "../models/user.model.js";
 
 export const verifyJWT = asyncHandler(async (req, res, next) => {
   const token =
@@ -16,9 +17,28 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     const decodedToken = await admin.auth().verifyIdToken(token);
     const user = decodedToken
     if (!user) {
-      // Client should make a request to /api/v1/users/refresh-token if they have refreshToken present in their cookie
-      // Then they will get a new access token which will allow them to refresh the access token without logging out the user
       throw new ApiError(401, "Invalid access token");
+    }
+    if(user){
+      const mongouser = await User.findOne({uid: user.uid});
+      if(!mongouser){
+            const userDoc = await admin.firestore().collection("users").where("Phone Number","==",req.user.phone_number).get();
+            if(userDoc.empty){
+                throw new ApiError(404, "User not found");
+            }
+        
+            const userData = userDoc.docs[0].data();
+            const newUser = new User({
+                uid: req.user.uid,
+                name: userData.Name,
+                email: userData["Email ID"],
+                phoneNumber: req.user.phone_number,
+                photoURL:userData["Profile"],
+                prefix: userData["Prefix"],
+                interests: userData["Interests"] || [ userData["Interest"] ],
+            });
+            await newUser.save();
+      }
     }
     req.user = user;
     next();
@@ -27,6 +47,26 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     // Then they will get a new access token which will allow them to refresh the access token without logging out the user
     throw new ApiError(401, error?.message || "Invalid access token");
   }
+});
+
+export const getLoggedInUser = asyncHandler(async (req, res, next) => {
+  const token =
+    req.cookies?.accessToken ||
+    req.header("Authorization")?.replace("Bearer ", "");
+
+    if (!token) {
+      next();
+    }
+    try{
+      const decodedToken = await admin.auth().verifyIdToken(token);
+      const user = decodedToken
+      req.user = user;
+    }
+    catch (error) {
+      // Fail silently with req.user being falsy
+    }
+    next();
+ 
 });
 
 /**

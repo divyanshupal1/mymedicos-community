@@ -84,17 +84,10 @@ const getQuestionById = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
     // Find the question by ID
-    const question = await Question.findById(id);
-
-    if (!question) {
-        throw new ApiError(404, "Question not found");
-    }
-
-    // Find related posts using the question ID
-    const relatedPosts = await Post.aggregate([
+    const question = await Question.aggregate([
         {
             $match: {
-                question: mongoose.Types.ObjectId(id)
+                _id: new mongoose.Types.ObjectId(id),
             }
         },
         {
@@ -105,10 +98,55 @@ const getQuestionById = asyncHandler(async (req, res) => {
                 as: "author",
             },
         },
+        { $unwind: "$author" },
+        {
+            $addFields: {
+                postCount: { $size: "$posts" }, // Add a new field for the count of posts
+            },
+        },
+        {
+            $project: {
+                title: 1,
+                body: 1,
+                tags: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                deleted: 1,
+                edited: 1,
+                postCount: 1,
+                "author.uid": 1,
+                "author.name": 1,
+                "author.email": 1,
+                "author.photoURL": 1,
+                posts: 1,
+            }
+        }
+    ]);
+
+    if (!question.length) {
+        throw new ApiError(404, "Question not found");
+    }
+    // Find related posts using the question ID
+    const relatedPosts = await Post.aggregate([
+        {
+            $match: {
+                question: new mongoose.Types.ObjectId(id),
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "author",
+                foreignField: "uid",
+                as: "author",
+            },
+        },
+        { $unwind: "$author" },
         {
             $addFields: {
                 likeCount: { $size: "$likes" }, // Add a new field for the count of likes
                 commentCount: { $size: "$comments" }, // Add a new field for the count of comments
+                liked: { $in: [req?.user?.uid||"", "$likes"] }, // Check if the user has liked the post
             },
         },
         {
@@ -116,17 +154,20 @@ const getQuestionById = asyncHandler(async (req, res) => {
                 body: 1,
                 edited: 1,
                 likeCount: 1,
+                commentCount: 1,
                 createdAt: 1,
                 updatedAt: 1,
                 "author.uid": 1,
                 "author.name": 1,
                 "author.email": 1,
+                "author.photoURL": 1,
+                liked: 1,
             }
         }
     ]);
 
     return res.status(200).json(
-        new ApiResponse(200, { question, relatedPosts }, "Question retrieved successfully")
+        new ApiResponse(200, { question:question[0], relatedPosts }, "Question retrieved successfully")
     );
 });
 
@@ -174,19 +215,38 @@ const getRandomRecentQuestions = asyncHandler(async (req, res) => {
 
     // Aggregate query to get recently added questions
     const questions = await Question.aggregate([
-        { $sort: { createdAt: -1 } }, // Sort by creation date in descending order (most recent first)
+        { $sort: { createdAt: -1 } }, // Sort by creation date in descending order
         { $limit: limit }, // Limit to the latest N questions
-        { $sample: { size: limit } }, // Randomly shuffle the results
+        {
+            $lookup: {
+                from: "users",
+                localField: "author",
+                foreignField: "uid",
+                as: "author",
+            },
+        },
+        { $unwind: "$author" },
+        {
+            $addFields: {
+                postCount: { $size: "$posts" }, // Add a new field for the count of likes
+            },
+        },
         {
             $project: {
                 title: 1,
                 body: 1,
                 tags: 1,
                 createdAt: 1,
-                author: 1
-            }
-        }
+                "author.uid": 1,
+                "author.name": 1,
+                "author.email": 1,
+                "author.photoURL": 1,
+                postCount: 1, // Add a new field for the count of likes
+
+            },
+        },
     ]);
+    
 
     if (!questions.length) {
         return res.status(404).json(

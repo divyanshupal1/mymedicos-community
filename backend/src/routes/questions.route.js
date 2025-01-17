@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { verifyJWT } from "../middlewares/auth.middlewares.js";
+import { getLoggedInUser, verifyJWT } from "../middlewares/auth.middlewares.js";
 import {
   createQuestionValidator,
   updateQuestionValidator,
@@ -35,7 +35,7 @@ router.route("/feed")
 
 router
   .route("/:id")
-  .get(getQuestionById)
+  .get(getLoggedInUser,getQuestionById)
   .patch(verifyJWT, updateQuestionValidator(), validate, updateQuestion)
   .delete(verifyJWT, deleteQuestion);
 

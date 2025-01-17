@@ -26,6 +26,11 @@ const QuestionSchema = new Schema({
         type: String, 
         required: true 
     },
+    posts: {
+        type: [Schema.Types.ObjectId],
+        ref: 'Post',
+        default: []
+    },
     createdAt: { 
         type: Date, 
         default: Date.now 

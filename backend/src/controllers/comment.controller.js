@@ -27,6 +27,7 @@ const updateComment = asyncHandler(async (req, res) => {
     }
 
     // Update the comment content
+    comment.edited = true;  // Set the edited flag to true
     comment.body = body;  // You can update other fields as needed, e.g., title, etc.
     comment.updatedAt = Date.now();  // Update the updatedAt timestamp
 
