@@ -22,17 +22,17 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     if(user){
       const mongouser = await User.findOne({uid: user.uid});
       if(!mongouser){
-            const userDoc = await admin.firestore().collection("users").where("Phone Number","==",req.user.phone_number).get();
+            const userDoc = await admin.firestore().collection("users").where("Phone Number","==",user.phone_number).get();
             if(userDoc.empty){
                 throw new ApiError(404, "User not found");
             }
         
             const userData = userDoc.docs[0].data();
             const newUser = new User({
-                uid: req.user.uid,
+                uid: user.uid,
                 name: userData.Name,
                 email: userData["Email ID"],
-                phoneNumber: req.user.phone_number,
+                phoneNumber: user.phone_number,
                 photoURL:userData["Profile"],
                 prefix: userData["Prefix"],
                 interests: userData["Interests"] || [ userData["Interest"] ],
