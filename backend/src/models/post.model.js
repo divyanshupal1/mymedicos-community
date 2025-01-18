@@ -5,7 +5,9 @@ const PostSchema = new Schema({
     question: {
         type: Schema.Types.ObjectId,
         ref: "Question",
-        required: true,
+        required: function () {
+            return this.flashcard === false;
+        },
     },
     body: {
         type: String,
@@ -27,10 +29,9 @@ const PostSchema = new Schema({
         type: Boolean,
         default: false,
     },
-    posts:{
-        type: [Schema.Types.ObjectId],
-        ref: "Post",
-        default: [],
+    flashcard:{
+        type: Boolean,
+        default: false,
     },
     comments: [
         {

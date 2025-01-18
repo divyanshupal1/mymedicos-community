@@ -2,11 +2,6 @@ import { body, param } from "express-validator";
 
 const createPostValidator = () => {
     return [
-        body("question")
-            .notEmpty()
-            .withMessage("Question ID is required")
-            .isMongoId()
-            .withMessage("Question ID must be a valid MongoDB ObjectId"),
         body("body")
             .notEmpty()
             .withMessage("Post body is required")

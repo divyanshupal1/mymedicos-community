@@ -2,7 +2,7 @@
  * @type {{ post: "POST"; question: "QUESTION"; flashcard:"FLASHCARD"} as const}
  */
 export const postEnum = {
-    post: "POST", question: "QUESTION", flashcard:"FLASHCARD"
+    post: "POST", flashcard:"FLASHCARD"
   };
   
   export const AvailablePostTypes = Object.values(postEnum);

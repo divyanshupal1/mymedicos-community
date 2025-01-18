@@ -9,28 +9,46 @@ import { Comment } from "../models/comments.model.js";
 const createPost = asyncHandler(async (req, res) => {
   const { question, body } = req.body;
   const author = req.user.uid;
-  const questionExists = await Question.findById(question);
-  if (!questionExists) {
-    return res.status(404).json({
-      message: "Question not found",
+
+  const flashcard  = req.body?.flashcard || false;
+
+  if(!flashcard){
+
+    const questionExists = await Question.findById(question);
+    if (!questionExists) {
+      return res.status(404).json({
+        message: "Question not found",
+      });
+    }
+
+    const newPost = new Post({
+      question,
+      body,
+      author,
+      flashcard
     });
+
+    const savedPost = await newPost.save();
+    questionExists.posts.push(savedPost._id);
+    await questionExists.save();
+
+    return res.status(201).json(
+      new ApiResponse(201, { post: savedPost}, "Post created successfully")
+    );
   }
+  else{
+    const newPost = new Post({
+      body,
+      author,
+      flashcard
+    });
 
-  const newPost = new Post({
-    question,
-    body,
-    author,
-  });
+    const savedPost = await newPost.save();
 
-  const savedPost = await newPost.save();
-
-  questionExists.posts.push(savedPost._id);
-  await questionExists.save();
-
-  return res.status(201).json({
-    message: "Post created successfully",
-    post: savedPost,
-  });
+    return res.status(201).json(
+      new ApiResponse(201, { post: savedPost}, "Post created successfully")
+    );
+  }
 });
 
 const getPostById = asyncHandler(async (req, res) => {
@@ -296,6 +314,57 @@ const likePost = asyncHandler(async (req, res) => {
   );
 });
 
+const getFlashcardFeed = asyncHandler(async (req, res) => {
+  const limit = 10; // Set the number of questions to fetch, you can adjust this number as needed
+
+  // Aggregate query to get recently added questions
+  const flashcards = await Post.aggregate([
+      { $match: { flashcard: true } }, // Match only flashcard posts
+      { $sort: { createdAt: -1 } }, // Sort by creation date in descending order
+      { $limit: limit }, // Limit to the latest N questions
+      {
+          $lookup: {
+              from: "users",
+              localField: "author",
+              foreignField: "uid",
+              as: "author",
+          },
+      },
+      { $unwind: "$author" },
+      {
+        $addFields: {
+          likeCount: { $size: "$likes" }, // Add a new field for the count of likes
+          liked: { $in: [req?.user?.uid || "", "$likes"] },
+          commentCount: { $size: "$comments" },
+        },
+      },
+      {
+        $project: {
+          body: 1,
+          edited: 1,
+          likeCount: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          "author.uid": 1,
+          "author.name": 1,
+          "author.email": 1,
+          "author.photoURL": 1,
+          liked: 1,
+          commentCount: 1,
+        },
+      },
+  ]);
+  
+
+  if (!flashcards.length) {
+    throw new ApiError(404, "No flashcards found");
+  }
+
+  return res.status(200).json(
+      new ApiResponse(200, { flashcards }, "Random recent flashcards fetched successfully")
+  );
+});
+
 export {
   createPost,
   getPostById,
@@ -304,4 +373,5 @@ export {
   getPostComments,
   commentOnPost,
   likePost,
+  getFlashcardFeed
 };

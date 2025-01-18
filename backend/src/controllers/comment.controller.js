@@ -1,6 +1,3 @@
-import mongoose from "mongoose";
-import { Post } from "../models/post.model.js";
-import { Question } from "../models/question.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
