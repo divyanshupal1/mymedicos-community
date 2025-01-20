@@ -7,16 +7,12 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { AvailablePostTypes } from "../constants.js";
 
 const createQuestion = asyncHandler(async (req, res) => {
-    const { title, body, tags,type } = req.body;
-    if(!AvailablePostTypes.includes(type)){
-        throw new ApiError(400,"Invalid post type")
-    }
+    const { title, body, tags } = req.body;
     const question = new Question({
         title,
         body,
         tags,
         author:req.user.uid,
-        type
     });
     const savedQuestion = await question.save();
     return res.status(201).json(

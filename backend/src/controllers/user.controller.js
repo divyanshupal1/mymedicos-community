@@ -46,8 +46,38 @@ const userComments = asyncHandler(async (req, res) => {
 });
 
 const userPosts = asyncHandler(async (req, res) => {
-    const id = req.params.id
-    const posts = await Post.find({ author: id,deleted: false });
+    const id = req.params.id;
+    const posts = await Post.aggregate([
+        {
+            $match: {
+                author: id,
+                deleted: false,
+                post:true,
+                flashcard:false
+            }
+        },
+        {
+            $addFields: {
+              likeCount: { $size: "$likes" }, // Add a new field for the count of likes
+              liked: { $in: [id || "", "$likes"] },
+              commentCount: { $size: "$comments" },
+            },
+          },
+          {
+            $project: {
+              body: 1,
+              edited: 1,
+              likeCount: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              flashcard: 1,
+              post: 1,
+              liked: 1,
+              commentCount: 1,
+              title: 1,
+            },
+          },
+    ]);
     return res.status(200).json(
         new ApiResponse(200, { posts }, "My posts retrieved successfully")
     );
@@ -55,9 +85,121 @@ const userPosts = asyncHandler(async (req, res) => {
 
 const userQuestions = asyncHandler(async (req, res) => {
     const id = req.params.id;
-    const questions = await Question.find({ author: id,deleted: false });
+    // const questions = await Question.find({ author: id,deleted: false });
+    const questions = await Question.aggregate([
+        {
+            $match: {
+                author: id,
+                deleted: false
+            }
+        },
+        { $sort: { createdAt: -1 } }, // Sort by creation date in descending order // Limit to the latest N questions
+        {
+            $addFields: {
+                postCount: { $size: "$posts" }, // Add a new field for the count of likes
+            },
+        },
+        {
+            $project: {
+                title: 1,
+                body: 1,
+                tags: 1,
+                edited: 1,
+                createdAt: 1,
+                postCount: 1, // Add a new field for the count of likes
+            },
+        },
+    ]);
     return res.status(200).json(
         new ApiResponse(200, { questions }, "My questions retrieved successfully")
+    );
+});
+
+const userAnswers = asyncHandler(async (req, res) => {
+    const id = req.params.id;
+    const posts = await Post.aggregate([
+        {
+            $match: {
+                author: id,
+                deleted: false,
+                post:false,
+                flashcard:false
+            }
+        },
+        {
+            $lookup: {
+              from: "questions", // Collection name in the same database
+              localField: "question",
+              foreignField: "_id",
+              as: "question",
+            },
+        },
+        { $unwind: "$question"
+        },
+        {
+            $addFields: {
+              likeCount: { $size: "$likes" }, // Add a new field for the count of likes
+              liked: { $in: [id || "", "$likes"] },
+              commentCount: { $size: "$comments" },
+            },
+          },
+          {
+            $project: {
+              body: 1,
+              edited: 1,
+              likeCount: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              flashcard: 1,
+              post: 1,
+              liked: 1,
+              commentCount: 1,
+              "question.title": 1,
+              "question._id" : 1,
+            },
+          },
+    ]);
+    return res.status(200).json(
+        new ApiResponse(200, { answers:posts }, "My answers retrieved successfully")
+    );
+});
+
+const userFlashcards = asyncHandler(async (req, res) => {
+    const id = req.params.id;
+    const posts = await Post.aggregate([
+        {
+            $match: {
+                author: id,
+                deleted: false,
+                post:false,
+                flashcard:true
+            }
+        },
+        {
+            $addFields: {
+              likeCount: { $size: "$likes" }, // Add a new field for the count of likes
+              liked: { $in: [id || "", "$likes"] },
+              commentCount: { $size: "$comments" },
+            },
+          },
+          {
+            $project: {
+              body: 1,
+              edited: 1,
+              likeCount: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              flashcard: 1,
+              post: 1,
+              liked: 1,
+              commentCount: 1,
+              title: 1,
+              readtime: 1,
+            },
+          },
+    ]);
+    return res.status(200).json(
+        new ApiResponse(200, { flashcards:posts }, "My flashcard retrieved successfully")
     );
 });
 
@@ -66,4 +208,6 @@ export {
     userComments,
     userPosts,
     userQuestions,
+    userAnswers,
+    userFlashcards
 };

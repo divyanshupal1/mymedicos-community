@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
-import { loginUser,userComments, userPosts, userQuestions } from "../controllers/user.controller.js";
+import { loginUser,userAnswers,userComments, userPosts, userQuestions,userFlashcards } from "../controllers/user.controller.js";
 
 
 
@@ -25,6 +25,16 @@ router.route('/:id/posts')
 router.route('/:id/questions')
     .get(
         userQuestions
+    );
+
+router.route('/:id/answers')
+    .get(
+        userAnswers
+    );
+
+router.route('/:id/flashcards')
+    .get(
+        userFlashcards
     );
 
 export default router;

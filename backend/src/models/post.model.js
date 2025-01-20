@@ -6,12 +6,31 @@ const PostSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: "Question",
         required: function () {
-            return this.flashcard === false;
+            return this.flashcard === false && this.post === false;
+        },
+    },
+    title:{
+        type: String,
+        required: function () {
+            return this.flashcard === true || this.post === true;
         },
     },
     body: {
         type: String,
         required: true,
+    },
+    tags:{
+        type: [String],
+        default: [],
+        required: function () {
+            return this.flashcard === true || this.post === true;
+        }
+    },
+    readtime:{
+        type: String,
+        required: function () {
+            return this.flashcard === true;
+        }
     },
     author: {
         type: String,
@@ -26,6 +45,10 @@ const PostSchema = new Schema({
         default: [],
     },
     edited: {
+        type: Boolean,
+        default: false,
+    },
+    post:{
         type: Boolean,
         default: false,
     },
@@ -55,6 +78,6 @@ PostSchema.pre("save", function (next) {
     }
     next();
 });
-PostSchema.index({ question: 1, author: 1 });
+PostSchema.index({ question: 1, author: 1,title:1,flashcard:1,post:1 });
 
 export const Post = mongoose.model("Post", PostSchema);

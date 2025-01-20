@@ -17,12 +17,18 @@ import {
     commentOnPost,
     likePost,
     getFlashcardFeed,
+    getPostFeed,
 } from "../controllers/post.controller.js";
 import { createCommentValidator } from "../validators/comment.validator.js";
 
 const router = Router();
 
 router.route("/").post(verifyJWT, createPostValidator(), validate, createPost);
+
+router.route("/feed").get(
+    getLoggedInUser, 
+    getPostFeed
+)
 
 router
     .route("/flashcards/feed")
